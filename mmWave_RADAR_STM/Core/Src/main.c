@@ -22,19 +22,27 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "LCD_DRIVER.h"
+#include "arm_math.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define TRUE 1
 #define FALSE 0
+
+#define FFT_SIZE 32
+
+#define PI 3.14159265359
+#define SPEED_OF_LIGHT 3e8
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,7 +54,6 @@
 ADC_HandleTypeDef hadc1;
 
 /* USER CODE BEGIN PV */
-int flashWarning = FALSE;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -60,31 +67,59 @@ static void MX_ADC1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-float adcToDistance(uint16_t adcValue) {
-	//konverzija ocitavanja ADC-a u metre
-    return (float)adcValue * 60 / 4095.0;
-}
-
 //pomocna funkcija za konverziju float u string
 void floatToString(char *buffer, int bufferSize, float value) {
     snprintf(buffer, bufferSize, "%.2f", value);
 }
 
-//pomocna funkcija za paljenje i gasenje led diode
-void warningFlash(GPIO_TypeDef *port, uint16_t pin){
+void collectADCSamples(float* samples, uint16_t size) {
+	lcdWriteString("Gathering data...");
 
-	if(!flashWarning)
-	{
-		HAL_GPIO_WritePin(port, pin, 1);
-		return;
-	}
+	HAL_ADCEx_Calibration_Start(&hadc1);
 
-	HAL_GPIO_WritePin(port, pin, 0);
-	HAL_Delay(100);
-	HAL_GPIO_WritePin(port, pin, 1);
-	HAL_Delay(100);
-	return;
+    for (int i = 0; i < size; i++) {
+    	HAL_ADC_Start(&hadc1);
+        if(HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY) == HAL_OK){
+
+    		samples[i] = HAL_ADC_GetValue(&hadc1);
+//    		char myString[10] = "";
+//    		floatToString(myString, sizeof(myString), samples[i]);
+//    		lcdWriteString(myString);
+//    		lcdClear();
+
+        }
+		HAL_ADC_Stop(&hadc1);
+    }
+
+    lcdClear();
 }
+
+
+void calculateDFT(const float inputSignal[], float realPart[], float imagPart[], int length) {
+    lcdWriteString("Converting...");
+
+    for (int k = 0; k < length; k++) {
+        realPart[k] = 0.0;
+        imagPart[k] = 0.0;
+
+        for (int n = 0; n < length; n++) {
+            float angle = -2 * PI * k * n / length;
+            float cos_val = cosf(angle);
+            float sin_val = sinf(angle);
+            realPart[k] += inputSignal[n] * cos_val;
+            imagPart[k] -= inputSignal[n] * sin_val;
+        }
+
+        // Correct the DC offset for the first element
+        if (k == 0) {
+            realPart[k] /= length;
+            imagPart[k] = 0.0;
+        }
+    }
+
+    lcdClear();
+}
+
 
 /* USER CODE END 0 */
 
@@ -120,11 +155,19 @@ int main(void)
   /* USER CODE BEGIN 2 */
   lcdInit();
 
-  uint16_t adcValue = 0;
-  uint16_t adcValueSave = 0;
-  float simulatedDistance = 0.0;
+
+  //Init FFT handle
+  //arm_cfft_radix2_instance_q15 fftInstance;
+
+  //q15_t fftBufIn[FFT_SIZE];
+  //q15_t fftBufOut[FFT_SIZE/2];
+
   char distanceString[20];
-  int writeAgain = TRUE;
+  float inputSignal[FFT_SIZE];
+
+  float realPart[FFT_SIZE];
+  float imagPart[FFT_SIZE];
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -134,53 +177,59 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  collectADCSamples(inputSignal, FFT_SIZE);
 
-	  //ocitavanje vrednosti potenciometra
-	  HAL_ADC_Start(&hadc1);
-	  if (HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY) == HAL_OK) {
-		  adcValue = HAL_ADC_GetValue(&hadc1);
-	  }
-	  HAL_ADC_Stop(&hadc1);
+//	  arm_cfft_radix2_init_q15(&fftInstance, FFT_SIZE, 0, 1);
+//	  arm_cfft_radix2_q15(&fftInstance, fftBufIn);
+//	  arm_cmplx_mag_q15(fftBufIn, fftBufOut, FFT_SIZE);
 
-	  //prebacivanje distance
-	  simulatedDistance = adcToDistance(adcValue);
-	  floatToString(distanceString, sizeof(distanceString), simulatedDistance);
+	  calculateDFT(inputSignal, realPart, imagPart, FFT_SIZE);
 
-	  if(writeAgain)//provera da li se vrednost ocitana sa ADC-a izmenila
-	  {
 
-		  if(simulatedDistance < 5.0)
-		  {
-			  lcdClear();
-			  lcdWriteString("COLLISION_WARN");
-			  lcdWriteCmd(0xC0);//prebacivanje kursora LCD-a na sledecu liniju
-			  lcdWriteString(distanceString);
-			  lcdWriteString("m");
-			  flashWarning = TRUE;
-		  }
-		  else
-		  {
-			  lcdClear();
-			  lcdWriteString(distanceString);
-			  lcdWriteString("m");
-			  flashWarning = FALSE;
-		  }
-
-		  writeAgain = FALSE;
-		  adcValueSave = adcValue;
+	  float amplitudeSpectrum[FFT_SIZE / 2];
+	  for (int i = 0; i < FFT_SIZE / 2; i++) {
+	      amplitudeSpectrum[i] = sqrt(realPart[i] * realPart[i] + imagPart[i] * imagPart[i]);
 	  }
 
 
-	  warningFlash(GPIOB, GPIO_PIN_15);
+	  float maxAmplitude = amplitudeSpectrum[0];
+	  int peakIndex = 0;
+	  for (int i = 1; i < FFT_SIZE / 2; i++) {
+	      if (amplitudeSpectrum[i] > maxAmplitude) {
+	          maxAmplitude = amplitudeSpectrum[i];
+	          peakIndex = i;
 
-
-	  if(adcValueSave != adcValue)
-	  {
-		  writeAgain = TRUE;
+	      }
 	  }
 
 
-	  HAL_Delay(150);
+	  float frequencySlope = 200;
+
+	  // Constants
+	  uint32_t ADC_Clock_Frequency = 8000000;
+	  uint32_t ADC_Prescaler = 2;
+	  uint32_t ADC_Sampling_Time = 239.5;
+
+	  float Sampling_Frequency_Hz;
+	  Sampling_Frequency_Hz = (float)(ADC_Clock_Frequency / ADC_Prescaler) / ADC_Sampling_Time;
+
+	  float peakFrequency = peakIndex * (Sampling_Frequency_Hz / FFT_SIZE);
+	  float targetRange = (((peakFrequency/100) * SPEED_OF_LIGHT) / (2*frequencySlope*1000000));
+
+	  floatToString(distanceString, sizeof(distanceString), targetRange);
+
+	  lcdClear();
+	  lcdWriteString(distanceString);
+	  lcdWriteString("m");
+
+//	  floatToString(distanceString, sizeof(distanceString), peakFrequency);
+//
+//	  lcdClear();
+//	  lcdWriteString(distanceString);
+//	  lcdWriteString("Hz");
+
+	  HAL_Delay(1500);
+	  lcdClear();
 
   }
   /* USER CODE END 3 */
@@ -251,7 +300,7 @@ static void MX_ADC1_Init(void)
   */
   hadc1.Instance = ADC1;
   hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
@@ -265,7 +314,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_8;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -294,9 +343,6 @@ static void MX_GPIO_Init(void)
                           |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
                           |GPIO_PIN_12|GPIO_PIN_13, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_SET);
-
   /*Configure GPIO pins : PA0 PA1 PA2 PA3
                            PA4 PA5 PA6 PA7
                            PA12 PA13 */
@@ -307,13 +353,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PB15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_15;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 }
 

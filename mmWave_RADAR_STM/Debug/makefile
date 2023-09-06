@@ -34,37 +34,37 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := mmWave_RADAR_STM
+BUILD_ARTIFACT_NAME := Sem_RADAR_Dist_Luka_Markovic_97_2018
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-mmWave_RADAR_STM.elf \
+Sem_RADAR_Dist_Luka_Markovic_97_2018.elf \
 
 MAP_FILES += \
-mmWave_RADAR_STM.map \
+Sem_RADAR_Dist_Luka_Markovic_97_2018.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-mmWave_RADAR_STM.list \
+Sem_RADAR_Dist_Luka_Markovic_97_2018.list \
 
 OBJCOPY_HEX += \
-mmWave_RADAR_STM.hex \
+Sem_RADAR_Dist_Luka_Markovic_97_2018.hex \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: mmWave_RADAR_STM.elf secondary-outputs
+main-build: Sem_RADAR_Dist_Luka_Markovic_97_2018.elf secondary-outputs
 
 # Tool invocations
-mmWave_RADAR_STM.elf mmWave_RADAR_STM.map: $(OBJS) $(USER_OBJS) C:\Users\LmArK\Desktop\MPC_SEM\mmWave_RADAR_STM\STM32F103C6TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "mmWave_RADAR_STM.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\LmArK\Desktop\MPC_SEM\mmWave_RADAR_STM\STM32F103C6TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="mmWave_RADAR_STM.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
+Sem_RADAR_Dist_Luka_Markovic_97_2018.elf Sem_RADAR_Dist_Luka_Markovic_97_2018.map: $(OBJS) $(USER_OBJS) C:\Users\LmArK\Desktop\CubeProjects\Sem_RADAR_Dist_Luka_Markovic_97_2018\STM32F103C6TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Sem_RADAR_Dist_Luka_Markovic_97_2018.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\LmArK\Desktop\CubeProjects\Sem_RADAR_Dist_Luka_Markovic_97_2018\STM32F103C6TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Sem_RADAR_Dist_Luka_Markovic_97_2018.map" -Wl,--gc-sections -static -L"C:\Users\LmArK\Desktop\CubeProjects\Sem_RADAR_Dist_Luka_Markovic_97_2018\Drivers\CMSIS\Lib\GCC" --specs=nano.specs -mfloat-abi=soft -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -73,19 +73,19 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-mmWave_RADAR_STM.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "mmWave_RADAR_STM.list"
+Sem_RADAR_Dist_Luka_Markovic_97_2018.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Sem_RADAR_Dist_Luka_Markovic_97_2018.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
-mmWave_RADAR_STM.hex: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objcopy  -O ihex $(EXECUTABLES) "mmWave_RADAR_STM.hex"
+Sem_RADAR_Dist_Luka_Markovic_97_2018.hex: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O ihex $(EXECUTABLES) "Sem_RADAR_Dist_Luka_Markovic_97_2018.hex"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) default.size.stdout mmWave_RADAR_STM.elf mmWave_RADAR_STM.hex mmWave_RADAR_STM.list mmWave_RADAR_STM.map
+	-$(RM) Sem_RADAR_Dist_Luka_Markovic_97_2018.elf Sem_RADAR_Dist_Luka_Markovic_97_2018.hex Sem_RADAR_Dist_Luka_Markovic_97_2018.list Sem_RADAR_Dist_Luka_Markovic_97_2018.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_HEX)

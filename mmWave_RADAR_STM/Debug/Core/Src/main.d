@@ -23,7 +23,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h \
- ../Core/Inc/LCD_DRIVER.h
+ ../Core/Inc/LCD_DRIVER.h \
+ C:/Users/LmArK/Desktop/CubeProjects/Sem_RADAR_Dist_Luka_Markovic_97_2018/Drivers/CMSIS/DSP/Include/arm_math.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
 ../Core/Inc/stm32f1xx_hal_conf.h:
@@ -50,3 +51,4 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_flash_ex.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h:
 ../Core/Inc/LCD_DRIVER.h:
+C:/Users/LmArK/Desktop/CubeProjects/Sem_RADAR_Dist_Luka_Markovic_97_2018/Drivers/CMSIS/DSP/Include/arm_math.h:
