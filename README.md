@@ -1,0 +1,3 @@
+Simulacija rada sa Texas Instruments mmWave radarskim senzorom, korišćenjem Proteus programa za simulaciju STM MCU i vizuelizaciju rezulata, u dve varjante. Main branch sadrzi prostiju simulaciju koja korišćenjem
+običnog potenciometra šalje distancu do objekta dobijenu sa senzora direktno mikrokontroleru, a V2.0-Signal_Gen branch sadrzi kompleksniju simulaciju koja koristi signal generator kako bi mikrokontroleru slala sinusoid
+koji simulira Intermediate Frequency signal koji se obrađuje korišćenjem Discrete Fourier Transform algoritma kao aproksimacije Fast Fourier Transform algoritma. Detaljniji opisi se nalaze u Dokumentacija.docx fajlovima.
